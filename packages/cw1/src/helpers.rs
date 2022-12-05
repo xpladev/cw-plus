@@ -1,4 +1,6 @@
-use cosmwasm_schema::cw_serde;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
 
 use crate::msg::Cw1ExecuteMsg;
@@ -7,7 +9,7 @@ use crate::msg::Cw1ExecuteMsg;
 /// for working with this.
 ///
 /// If you wish to persist this, convert to Cw1CanonicalContract via .canonical()
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Cw1Contract(pub Addr);
 
 impl Cw1Contract {

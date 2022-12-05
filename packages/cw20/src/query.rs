@@ -1,14 +1,13 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{Addr, Binary, Uint128};
 
 use crate::logo::LogoInfo;
 use cw_utils::Expiration;
 
-#[cw_serde]
-
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum Cw20QueryMsg {
     /// Returns the current balance of the given address, 0 if unset.
     /// Return type: BalanceResponse.
@@ -51,12 +50,12 @@ pub enum Cw20QueryMsg {
     },
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct BalanceResponse {
     pub balance: Uint128,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct TokenInfoResponse {
     pub name: String,
     pub symbol: String,
@@ -70,7 +69,7 @@ pub struct AllowanceResponse {
     pub expires: Expiration,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct MinterResponse {
     pub minter: String,
     /// cap is a hard cap on total supply that can be achieved by minting.
@@ -93,13 +92,13 @@ pub struct MarketingInfoResponse {
 
 /// When we download an embedded logo, we get this response type.
 /// We expect a SPA to be able to accept this info and display it.
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct DownloadLogoResponse {
     pub mime_type: String,
     pub data: Binary,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct AllowanceInfo {
     pub spender: String,
     pub allowance: Uint128,
@@ -111,7 +110,7 @@ pub struct AllAllowancesResponse {
     pub allowances: Vec<AllowanceInfo>,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct SpenderAllowanceInfo {
     pub owner: String,
     pub allowance: Uint128,
@@ -123,7 +122,7 @@ pub struct AllSpenderAllowancesResponse {
     pub allowances: Vec<SpenderAllowanceInfo>,
 }
 
-#[derive(Serialize, Deserialize, Clone, PartialEq, Eq, JsonSchema, Debug, Default)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug, Default)]
 pub struct AllAccountsResponse {
     pub accounts: Vec<String>,
 }

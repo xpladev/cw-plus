@@ -1,11 +1,12 @@
-use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::Uint128;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use cw20::{Cw20ReceiveMsg, Denom};
 pub use cw_controllers::ClaimsResponse;
 use cw_utils::Duration;
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
     /// denom of the token to stake
     pub denom: Denom,
@@ -17,7 +18,8 @@ pub struct InstantiateMsg {
     pub admin: Option<String>,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     /// Bond will bond all staking tokens sent with the message and update membership weight
     Bond {},
@@ -40,42 +42,44 @@ pub enum ExecuteMsg {
     Receive(Cw20ReceiveMsg),
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ReceiveMsg {
     /// Only valid cw20 message is to bond the tokens
     Bond {},
 }
 
-#[cw_serde]
-#[derive(QueryResponses)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Claims shows the tokens in process of unbonding for this address
-    #[returns(cw_controllers::ClaimsResponse)]
-    Claims { address: String },
+    Claims {
+        address: String,
+    },
     // Show the number of tokens currently staked by this address.
-    #[returns(StakedResponse)]
-    Staked { address: String },
+    Staked {
+        address: String,
+    },
 
-    #[returns(cw_controllers::AdminResponse)]
+    /// Return AdminResponse
     Admin {},
-    #[returns(cw4::TotalWeightResponse)]
+    /// Return TotalWeightResponse
     TotalWeight {},
-    #[returns(cw4::MemberListResponse)]
+    /// Returns MembersListResponse
     ListMembers {
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    #[returns(cw4::MemberResponse)]
+    /// Returns MemberResponse
     Member {
         addr: String,
         at_height: Option<u64>,
     },
-    /// Shows all registered hooks.
-    #[returns(cw_controllers::HooksResponse)]
+    /// Shows all registered hooks. Returns HooksResponse.
     Hooks {},
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct StakedResponse {
     pub stake: Uint128,
     pub denom: Denom,

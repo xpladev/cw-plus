@@ -1,4 +1,6 @@
-use cosmwasm_schema::{cw_serde, QueryResponses};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use cosmwasm_std::{CosmosMsg, Empty};
 use cw3::Vote;
 use cw4::MemberChangedHookMsg;
@@ -6,7 +8,7 @@ use cw_utils::{Duration, Expiration, Threshold};
 
 use crate::state::Executor;
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
     // this is the group contract that contains the member list
     pub group_addr: String,
@@ -18,7 +20,8 @@ pub struct InstantiateMsg {
 }
 
 // TODO: add some T variants? Maybe good enough as fixed Empty for now
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Propose {
         title: String,
@@ -42,34 +45,34 @@ pub enum ExecuteMsg {
 }
 
 // We can also add this as a cw3 extension
-#[cw_serde]
-#[derive(QueryResponses)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    #[returns(cw_utils::ThresholdResponse)]
+    /// Return ThresholdResponse
     Threshold {},
-    #[returns(cw3::ProposalResponse)]
+    /// Returns ProposalResponse
     Proposal { proposal_id: u64 },
-    #[returns(cw3::ProposalListResponse)]
+    /// Returns ProposalListResponse
     ListProposals {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
-    #[returns(cw3::ProposalListResponse)]
+    /// Returns ProposalListResponse
     ReverseProposals {
         start_before: Option<u64>,
         limit: Option<u32>,
     },
-    #[returns(cw3::VoteResponse)]
+    /// Returns VoteResponse
     Vote { proposal_id: u64, voter: String },
-    #[returns(cw3::VoteListResponse)]
+    /// Returns VoteListResponse
     ListVotes {
         proposal_id: u64,
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    #[returns(cw3::VoterResponse)]
+    /// Returns VoterInfo
     Voter { address: String },
-    #[returns(cw3::VoterListResponse)]
+    /// Returns VoterListResponse
     ListVoters {
         start_after: Option<String>,
         limit: Option<u32>,

@@ -1,23 +1,26 @@
-use cosmwasm_schema::{cw_serde, QueryResponses};
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use cosmwasm_std::{CosmosMsg, Empty};
 use cw3::Vote;
 use cw_utils::{Duration, Expiration, Threshold};
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct InstantiateMsg {
     pub voters: Vec<Voter>,
     pub threshold: Threshold,
     pub max_voting_period: Duration,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Voter {
     pub addr: String,
     pub weight: u64,
 }
 
 // TODO: add some T variants? Maybe good enough as fixed Empty for now
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     Propose {
         title: String,
@@ -39,34 +42,34 @@ pub enum ExecuteMsg {
 }
 
 // We can also add this as a cw3 extension
-#[cw_serde]
-#[derive(QueryResponses)]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    #[returns(cw_utils::ThresholdResponse)]
+    /// Return ThresholdResponse
     Threshold {},
-    #[returns(cw3::ProposalResponse)]
+    /// Returns ProposalResponse
     Proposal { proposal_id: u64 },
-    #[returns(cw3::ProposalListResponse)]
+    /// Returns ProposalListResponse
     ListProposals {
         start_after: Option<u64>,
         limit: Option<u32>,
     },
-    #[returns(cw3::ProposalListResponse)]
+    /// Returns ProposalListResponse
     ReverseProposals {
         start_before: Option<u64>,
         limit: Option<u32>,
     },
-    #[returns(cw3::VoteResponse)]
+    /// Returns VoteResponse
     Vote { proposal_id: u64, voter: String },
-    #[returns(cw3::VoteListResponse)]
+    /// Returns VoteListResponse
     ListVotes {
         proposal_id: u64,
         start_after: Option<String>,
         limit: Option<u32>,
     },
-    #[returns(cw3::VoterResponse)]
+    /// Returns VoterInfo
     Voter { address: String },
-    #[returns(cw3::VoterListResponse)]
+    /// Returns VoterListResponse
     ListVoters {
         start_after: Option<String>,
         limit: Option<u32>,

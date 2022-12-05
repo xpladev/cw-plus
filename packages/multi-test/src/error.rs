@@ -1,7 +1,7 @@
 use cosmwasm_std::{WasmMsg, WasmQuery};
 use thiserror::Error;
 
-#[derive(Debug, Error, PartialEq, Eq)]
+#[derive(Debug, Error, PartialEq)]
 pub enum Error {
     #[error("Empty attribute key. Value: {value}")]
     EmptyAttributeKey { value: String },

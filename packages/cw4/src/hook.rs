@@ -1,4 +1,6 @@
-use cosmwasm_schema::cw_serde;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use cosmwasm_std::{to_binary, Binary, CosmosMsg, StdResult, WasmMsg};
 
 /// MemberDiff shows the old and new states for a given cw4 member
@@ -6,7 +8,7 @@ use cosmwasm_std::{to_binary, Binary, CosmosMsg, StdResult, WasmMsg};
 /// old = None, new = Some -> Insert
 /// old = Some, new = Some -> Update
 /// old = Some, new = None -> Delete
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct MemberDiff {
     pub key: String,
     pub old: Option<u64>,
@@ -25,7 +27,8 @@ impl MemberDiff {
 
 /// MemberChangedHookMsg should be de/serialized under `MemberChangedHook()` variant in a ExecuteMsg.
 /// This contains a list of all diffs on the given transaction.
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub struct MemberChangedHookMsg {
     pub diffs: Vec<MemberDiff>,
 }
@@ -58,8 +61,8 @@ impl MemberChangedHookMsg {
 }
 
 // This is just a helper to properly serialize the above message
-#[cw_serde]
-
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 enum MemberChangedExecuteMsg {
     MemberChangedHook(MemberChangedHookMsg),
 }

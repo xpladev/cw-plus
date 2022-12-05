@@ -1,8 +1,10 @@
-use cosmwasm_schema::cw_serde;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use cosmwasm_std::{Addr, Uint128};
 use std::fmt;
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Cw20Coin {
     pub address: String,
     pub amount: Uint128,
@@ -20,7 +22,7 @@ impl fmt::Display for Cw20Coin {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Cw20CoinVerified {
     pub address: Addr,
     pub amount: Uint128,

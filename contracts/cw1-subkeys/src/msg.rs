@@ -1,14 +1,14 @@
 use schemars::JsonSchema;
-
+use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use cosmwasm_schema::{cw_serde, QueryResponses};
 use cosmwasm_std::{Coin, CosmosMsg, Empty};
 use cw_utils::{Expiration, NativeBalance};
 
 use crate::state::Permissions;
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -43,41 +43,40 @@ where
     },
 }
 
-#[cw_serde]
-#[derive(QueryResponses)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     /// Shows all admins and whether or not it is mutable
-    #[returns(cw1_whitelist::msg::AdminListResponse)]
+    /// Returns cw1-whitelist::AdminListResponse
     AdminList {},
     /// Get the current allowance for the given subkey (how much it can spend)
-    #[returns(crate::state::Allowance)]
+    /// Returns crate::state::Allowance
     Allowance { spender: String },
     /// Get the current permissions for the given subkey (how much it can spend)
-    #[returns(PermissionsInfo)]
+    /// Returns PermissionsInfo
     Permissions { spender: String },
     /// Checks permissions of the caller on this proxy.
     /// If CanExecute returns true then a call to `Execute` with the same message,
     /// before any further state changes, should also succeed.
-    #[returns(cw1::CanExecuteResponse)]
     CanExecute { sender: String, msg: CosmosMsg<T> },
     /// Gets all Allowances for this contract
-    #[returns(AllAllowancesResponse)]
+    /// Returns AllAllowancesResponse
     AllAllowances {
         start_after: Option<String>,
         limit: Option<u32>,
     },
     /// Gets all Permissions for this contract
-    #[returns(AllPermissionsResponse)]
+    /// Returns AllPermissionsResponse
     AllPermissions {
         start_after: Option<String>,
         limit: Option<u32>,
     },
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AllAllowancesResponse {
     pub allowances: Vec<AllowanceInfo>,
 }
@@ -95,7 +94,7 @@ impl AllAllowancesResponse {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AllowanceInfo {
     pub spender: String,
     pub balance: NativeBalance,
@@ -115,7 +114,7 @@ impl AllowanceInfo {
     /// ```
     /// # use cw_utils::{Expiration, NativeBalance};
     /// # use cw1_subkeys::msg::AllowanceInfo;
-    /// # use cosmwasm_schema::{cw_serde, QueryResponses};use cosmwasm_std::coin;
+    /// # use cosmwasm_std::coin;
     ///
     /// let mut allows = vec![AllowanceInfo {
     ///   spender: "spender2".to_owned(),
@@ -144,7 +143,7 @@ impl AllowanceInfo {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct PermissionsInfo {
     pub spender: String,
     pub permissions: Permissions,
@@ -184,7 +183,7 @@ impl PermissionsInfo {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AllPermissionsResponse {
     pub permissions: Vec<PermissionsInfo>,
 }

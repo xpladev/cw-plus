@@ -4,7 +4,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::{
     to_binary, Binary, CosmosMsg, Deps, DepsMut, Empty, Env, MessageInfo, Response, StdError,
 };
@@ -32,7 +31,8 @@ impl InstantiateMsg {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum Cw1ExecMsg<T = Empty> {
     /// Execute requests the contract to re-dispatch all these messages with the
     /// contract's address as sender. Every implementation has it's own logic to
@@ -40,7 +40,8 @@ pub enum Cw1ExecMsg<T = Empty> {
     Execute { msgs: Vec<CosmosMsg<T>> },
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum WhitelistExecMsg {
     /// Freeze will make a mutable contract immutable, must be called by an admin
     Freeze {},
@@ -88,7 +89,8 @@ impl WhitelistExecMsg {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum Cw1QueryMsg<T = Empty> {
     /// Checks permissions of the caller on this proxy.
     /// If CanExecute returns true then a call to `Execute` with the same message,
@@ -116,7 +118,8 @@ impl<T> Cw1QueryMsg<T> {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum WhitelistQueryMsg {
     /// Shows all admins and whether or not it is mutable
     AdminList {},
@@ -142,7 +145,7 @@ impl WhitelistQueryMsg {
     }
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct AdminListResponse {
     pub admins: Vec<String>,
     pub mutable: bool,

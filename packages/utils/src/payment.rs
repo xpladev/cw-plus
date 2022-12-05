@@ -52,7 +52,7 @@ pub fn may_pay(info: &MessageInfo, denom: &str) -> Result<Uint128, PaymentError>
     }
 }
 
-#[derive(Error, Debug, PartialEq, Eq)]
+#[derive(Error, Debug, PartialEq)]
 pub enum PaymentError {
     #[error("Must send reserve token '{0}'")]
     MissingDenom(String),

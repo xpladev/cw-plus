@@ -1,4 +1,6 @@
-use cosmwasm_schema::cw_serde;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use cosmwasm_std::{to_binary, Addr, CosmosMsg, StdResult, WasmMsg};
 
 use crate::msg::{Cw3ExecuteMsg, Vote};
@@ -11,7 +13,7 @@ use cw_utils::Expiration;
 ///
 /// FIXME: Cw3Contract currently only supports CosmosMsg<Empty>. When we actually
 /// use this in some consuming code, we should make it generic over CosmosMsg<T>.
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Cw3Contract(pub Addr);
 
 impl Cw3Contract {

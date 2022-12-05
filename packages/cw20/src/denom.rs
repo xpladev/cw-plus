@@ -1,8 +1,9 @@
-use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-#[cw_serde]
-
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum Denom {
     Native(String),
     Cw20(Addr),

@@ -1,7 +1,8 @@
-use cosmwasm_schema::cw_serde;
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
-#[cw_serde]
-
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+#[serde(rename_all = "snake_case")]
 pub enum Cw4QueryMsg {
     /// Return AdminResponse
     Admin {},
@@ -21,7 +22,7 @@ pub enum Cw4QueryMsg {
     Hooks {},
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct AdminResponse {
     pub admin: Option<String>,
 }
@@ -29,28 +30,28 @@ pub struct AdminResponse {
 /// A group member has a weight associated with them.
 /// This may all be equal, or may have meaning in the app that
 /// makes use of the group (eg. voting power)
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct Member {
     pub addr: String,
     pub weight: u64,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct MemberListResponse {
     pub members: Vec<Member>,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct MemberResponse {
     pub weight: Option<u64>,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct TotalWeightResponse {
     pub weight: u64,
 }
 
-#[cw_serde]
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct HooksResponse {
     pub hooks: Vec<String>,
 }
