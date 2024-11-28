@@ -34,7 +34,9 @@ pub enum Cw1155ExecuteMsg {
     Mint {
         /// If `to` is not contract, `msg` should be `None`
         to: String,
-        token_id: TokenId,
+        /// If `token_id` exists but `token_uri` and `is_sbt` are provided,
+        /// the provided values will be ignored.
+        token_info: TokenInfo,
         value: Uint128,
         /// `None` means don't call the receiver interface
         msg: Option<Binary>,
@@ -43,7 +45,9 @@ pub enum Cw1155ExecuteMsg {
     BatchMint {
         /// If `to` is not contract, `msg` should be `None`
         to: String,
-        batch: Vec<(TokenId, Uint128)>,
+        /// If `token_id` exists but `token_uri` and `is_sbt` are provided,
+        /// the provided values will be ignored.
+        batch: Vec<(TokenInfo, Uint128)>,
         /// `None` means don't call the receiver interface
         msg: Option<Binary>,
     },
@@ -66,4 +70,15 @@ pub enum Cw1155ExecuteMsg {
     },
     /// Remove previously granted ApproveAll permission
     RevokeAll { operator: String },
+}
+
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct TokenInfo {
+    pub token_id: TokenId,
+    /// Token's metadata URI (default is an empty string)
+    pub token_uri: Option<String>,
+    /// Indicates whether the token is a Soulbound Token (non-transferable)
+    /// Defaults to `false` if not specified.
+    pub is_sbt: Option<bool>,
 }

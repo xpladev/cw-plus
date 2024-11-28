@@ -23,11 +23,12 @@ approval from it.
 `BatchSendFrom{from, to, batch: Vec<(token_id, value)>, msg}` - Batched version of `SendFrom` which can handle multiple
 types of tokens at once.
 
-`Mint {to, token_id, value, msg}` - This mints some tokens to `to` account, If `to` is controlled by a smart contract,
+`Mint {to, token_info, value, msg}` - This mints some tokens to `to` account, If `to` is controlled by a smart contract,
+`token_info` consists of token_id, token_uri(optional), and is_sbt(optional).
 it should implement `CW1155Receiver` interface, `msg` will be passed to it along with other fields, otherwise, `msg`
 should be `None`.
 
-`BatchMint {to, batch: Vec<(token_id, value)>, msg}` - Batched version of `Mint`.
+`BatchMint {to, batch: Vec<(token_info, value)>, msg}` - Batched version of `Mint`.
 
 `Burn {from, token_id, value}` - This burns some tokens from `from` account.
 
@@ -63,7 +64,7 @@ Any contract wish to receive CW1155 tokens must implement `Cw1155ReceiveMsg` and
 
 ### Events
 
-- `transfer(from, to, token_id, value)`
+- `transfer(from, to, token_id, value)`
 
   `from`/`to` are optional, no `from` attribute means minting, no `to` attribute means burning, but they mustn't be
 neglected at the same time.
@@ -73,7 +74,7 @@ neglected at the same time.
 
 ### Queries
 
-`TokenInfo{ token_id }` - Query metadata url of `token_id`.
+`TokenInfo{ token_id }` - Query the metadata URL of a `token_id` and the Soulbound attribute `is_sbt`.
 
 ### Events
 

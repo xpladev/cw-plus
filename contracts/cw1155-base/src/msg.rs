@@ -8,3 +8,6 @@ pub struct InstantiateMsg {
     /// contract.
     pub minter: String,
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MigrateMsg {}

@@ -9,12 +9,15 @@ use cw1155::{
     ApproveAllEvent, ApprovedForAllResponse, BalanceResponse, BatchBalanceResponse,
     Cw1155BatchReceiveMsg, Cw1155ExecuteMsg, Cw1155QueryMsg, Cw1155ReceiveMsg, Expiration,
     IsApprovedForAllResponse, TokenId, TokenInfoResponse, TokensResponse, TransferEvent,
+    TokenInfo
 };
+
+use crate::state::TokenMetadata;
 use cw2::set_contract_version;
 use cw_utils::{maybe_addr, Event};
 
 use crate::error::ContractError;
-use crate::msg::InstantiateMsg;
+use crate::msg::{InstantiateMsg, MigrateMsg};
 use crate::state::{APPROVES, BALANCES, MINTER, TOKENS};
 
 // version info for migration info
@@ -22,7 +25,7 @@ const CONTRACT_NAME: &str = "crates.io:cw1155-base";
 const CONTRACT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
 const DEFAULT_LIMIT: u32 = 10;
-const MAX_LIMIT: u32 = 30;
+const MAX_LIMIT: u32 = 100;
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn instantiate(
@@ -68,10 +71,10 @@ pub fn execute(
         } => execute_batch_send_from(env, from, to, batch, msg),
         Cw1155ExecuteMsg::Mint {
             to,
-            token_id,
+            token_info,
             value,
             msg,
-        } => execute_mint(env, to, token_id, value, msg),
+        } => execute_mint(env, to, token_info, value, msg),
         Cw1155ExecuteMsg::BatchMint { to, batch, msg } => execute_batch_mint(env, to, batch, msg),
         Cw1155ExecuteMsg::Burn {
             from,
@@ -161,6 +164,13 @@ pub fn execute_send_from(
     amount: Uint128,
     msg: Option<Binary>,
 ) -> Result<Response, ContractError> {
+
+    // Check the SBT (Soulbound Token) attribute
+    let token_info =  TOKENS.load(env.deps.storage, &token_id)?;
+    if token_info.is_sbt {
+        return Err(ContractError::SoulboundToken {});
+    }
+
     let from_addr = env.deps.api.addr_validate(&from)?;
     let to_addr = env.deps.api.addr_validate(&to)?;
 
@@ -202,7 +212,7 @@ pub fn execute_send_from(
 pub fn execute_mint(
     env: ExecuteEnv,
     to: String,
-    token_id: TokenId,
+    token_info: TokenInfo,
     amount: Uint128,
     msg: Option<Binary>,
 ) -> Result<Response, ContractError> {
@@ -216,6 +226,7 @@ pub fn execute_mint(
 
     let mut rsp = Response::default();
 
+    let token_id = token_info.token_id.clone();
     let event = execute_transfer_inner(&mut deps, None, Some(&to_addr), &token_id, amount)?;
     event.add_attributes(&mut rsp);
 
@@ -234,8 +245,11 @@ pub fn execute_mint(
 
     // insert if not exist
     if !TOKENS.has(deps.storage, &token_id) {
-        // we must save some valid data here
-        TOKENS.save(deps.storage, &token_id, &String::new())?;
+        let token_meta = TokenMetadata {
+            token_uri: token_info.token_uri.unwrap_or_default(),
+            is_sbt: token_info.is_sbt.unwrap_or(false),
+        };
+        TOKENS.save(deps.storage, &token_id, &token_meta)?;
     }
 
     Ok(rsp)
@@ -284,6 +298,12 @@ pub fn execute_batch_send_from(
 
     let mut rsp = Response::default();
     for (token_id, amount) in batch.iter() {
+        //check sbt(SoulBoundToken)
+        let token_info =  TOKENS.load(deps.storage, token_id)?;
+        if token_info.is_sbt {
+            return Err(ContractError::SoulboundToken {});
+        }
+
         let event = execute_transfer_inner(
             &mut deps,
             Some(&from_addr),
@@ -312,7 +332,7 @@ pub fn execute_batch_send_from(
 pub fn execute_batch_mint(
     env: ExecuteEnv,
     to: String,
-    batch: Vec<(TokenId, Uint128)>,
+    batch: Vec<(TokenInfo, Uint128)>,
     msg: Option<Binary>,
 ) -> Result<Response, ContractError> {
     let ExecuteEnv { mut deps, info, .. } = env;
@@ -324,29 +344,39 @@ pub fn execute_batch_mint(
 
     let mut rsp = Response::default();
 
-    for (token_id, amount) in batch.iter() {
+    for (token_info, amount) in batch.iter() {
+        let token_id = &token_info.token_id;
         let event = execute_transfer_inner(&mut deps, None, Some(&to_addr), token_id, *amount)?;
         event.add_attributes(&mut rsp);
 
         // insert if not exist
         if !TOKENS.has(deps.storage, token_id) {
-            // we must save some valid data here
-            TOKENS.save(deps.storage, token_id, &String::new())?;
+            let token_meta = TokenMetadata {
+                token_uri: token_info.token_uri.as_ref().unwrap_or(&String::new()).clone(),
+                is_sbt: token_info.is_sbt.unwrap_or(false),
+            };
+            TOKENS.save(deps.storage, token_id, &token_meta)?;
         }
     }
 
     if let Some(msg) = msg {
+        // Convert Vec<(MintMsg, Uint128)> to Vec<(TokenId, Uint128)>
+        let batch_converted: Vec<(TokenId, Uint128)> = batch
+            .iter()
+            .map(|(token_info, amount)| (token_info.token_id.clone(), *amount))
+            .collect();
+    
         rsp.messages = vec![SubMsg::new(
             Cw1155BatchReceiveMsg {
                 operator: info.sender.to_string(),
                 from: None,
-                batch,
+                batch: batch_converted,
                 msg,
             }
             .into_cosmos_msg(to)?,
-        )]
-    };
-
+        )];
+    }
+    
     Ok(rsp)
 }
 
@@ -461,8 +491,11 @@ pub fn query(deps: Deps, env: Env, msg: Cw1155QueryMsg) -> StdResult<Binary> {
             )?)
         }
         Cw1155QueryMsg::TokenInfo { token_id } => {
-            let url = TOKENS.load(deps.storage, &token_id)?;
-            to_binary(&TokenInfoResponse { url })
+            let token_meta = TOKENS.load(deps.storage, &token_id)?;
+            to_binary(&TokenInfoResponse { 
+                token_uri: token_meta.token_uri,
+                is_sbt: token_meta.is_sbt,
+            })
         }
         Cw1155QueryMsg::Tokens {
             owner,
@@ -537,6 +570,11 @@ fn query_all_tokens(
     Ok(TokensResponse { tokens })
 }
 
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: MigrateMsg) -> Result<Response, ContractError> {
+    Ok(Response::default())
+}
+
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
@@ -581,7 +619,11 @@ mod tests {
         // invalid mint, user1 don't mint permission
         let mint_msg = Cw1155ExecuteMsg::Mint {
             to: user1.clone(),
-            token_id: token1.clone(),
+            token_info: TokenInfo{
+                token_id: token1.clone(),
+                token_uri: None,
+                is_sbt: None,
+            },
             value: 1u64.into(),
             msg: None,
         };
@@ -710,7 +752,17 @@ mod tests {
                 mock_info(minter.as_ref(), &[]),
                 Cw1155ExecuteMsg::BatchMint {
                     to: user2.clone(),
-                    batch: vec![(token2.clone(), 1u64.into()), (token3.clone(), 1u64.into())],
+                    batch: vec![
+                        (TokenInfo{
+                            token_id: token2.clone(),
+                            token_uri: None,
+                            is_sbt: None,
+                        }, 1u64.into()),
+                        (TokenInfo{
+                            token_id: token3.clone(),
+                            token_uri: None,
+                            is_sbt: None,
+                        }, 1u64.into())],
                     msg: None
                 },
             )
@@ -908,7 +960,11 @@ mod tests {
             mock_info(minter.as_ref(), &[]),
             Cw1155ExecuteMsg::Mint {
                 to: user1.clone(),
+                token_info: TokenInfo{
                 token_id: token2.clone(),
+                token_uri: None,
+                is_sbt: None,
+            },
                 value: 1u64.into(),
                 msg: None,
             },
@@ -923,7 +979,11 @@ mod tests {
                 mock_info(minter.as_ref(), &[]),
                 Cw1155ExecuteMsg::Mint {
                     to: receiver.clone(),
-                    token_id: token1.clone(),
+                    token_info: TokenInfo{
+                        token_id: token1.clone(),
+                        token_uri: None,
+                        is_sbt: None,
+                    },
                     value: 1u64.into(),
                     msg: Some(dummy_msg.clone()),
                 },
@@ -1003,7 +1063,11 @@ mod tests {
                 to: users[0].clone(),
                 batch: tokens
                     .iter()
-                    .map(|token_id| (token_id.clone(), 1u64.into()))
+                    .map(|token_id| (TokenInfo{
+                        token_id: token_id.clone(),
+                        token_uri: None,
+                        is_sbt: None,
+                    }, 1u64.into()))
                     .collect::<Vec<_>>(),
                 msg: None,
             },
@@ -1062,7 +1126,7 @@ mod tests {
                     token_id: "token5".to_owned()
                 },
             ),
-            to_binary(&TokenInfoResponse { url: "".to_owned() })
+            to_binary(&TokenInfoResponse { token_uri: "".to_owned(), is_sbt: false })
         );
 
         for user in users[1..].iter() {
@@ -1124,7 +1188,11 @@ mod tests {
             mock_info(minter.as_ref(), &[]),
             Cw1155ExecuteMsg::Mint {
                 to: user1.clone(),
-                token_id: token1,
+                token_info: TokenInfo{
+                    token_id: token1.clone(),
+                    token_uri: None,
+                    is_sbt: None,
+                },
                 value: 1u64.into(),
                 msg: None,
             },
@@ -1197,7 +1265,11 @@ mod tests {
             mock_info(minter.as_ref(), &[]),
             Cw1155ExecuteMsg::Mint {
                 to: user1.clone(),
-                token_id: token1.clone(),
+                token_info: TokenInfo{
+                    token_id: token1.clone(),
+                    token_uri: None,
+                    is_sbt: None,
+                },
                 value: u128::MAX.into(),
                 msg: None,
             },
@@ -1211,7 +1283,11 @@ mod tests {
                 mock_info(minter.as_ref(), &[]),
                 Cw1155ExecuteMsg::Mint {
                     to: user1,
-                    token_id: token1,
+                    token_info: TokenInfo{
+                        token_id: token1.clone(),
+                        token_uri: None,
+                        is_sbt: None,
+                    },
                     value: 1u64.into(),
                     msg: None,
                 },

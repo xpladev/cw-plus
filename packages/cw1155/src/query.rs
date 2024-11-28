@@ -84,7 +84,8 @@ pub struct IsApprovedForAllResponse {
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct TokenInfoResponse {
     /// Should be a url point to a json file
-    pub url: String,
+    pub token_uri: String,
+    pub is_sbt: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]

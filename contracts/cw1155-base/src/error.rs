@@ -9,6 +9,9 @@ pub enum ContractError {
     #[error("Unauthorized")]
     Unauthorized {},
 
+    #[error("Soulbound tokens cannot be transferred.")]
+    SoulboundToken {},
+
     #[error("Expired")]
     Expired {},
 }
